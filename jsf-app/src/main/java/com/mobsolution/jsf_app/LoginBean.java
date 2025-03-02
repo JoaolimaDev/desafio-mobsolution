@@ -2,11 +2,12 @@ package com.mobsolution.jsf_app;
 
 
 import jakarta.inject.Named;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.Data;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collections;
 
@@ -49,13 +50,25 @@ public class LoginBean implements Serializable {
             LoginResponse response = responseEntity.getBody();
 
             if (response != null && "OK".equals(response.getStatus())) {
-                // Login successful: redirect to dashboard.xhtml
+              String jwtToken = response.getMensagem();
+
+                // Criar um cookie com o JWT
+                Cookie jwtCookie = new Cookie("jwt", jwtToken);
+                jwtCookie.setHttpOnly(false);  // Garante que o cookie seja acessível apenas pelo servidor
+                jwtCookie.setSecure(true);    // Habilite se estiver usando HTTPS
+                jwtCookie.setPath("/");       // Disponível para todo o site
+                jwtCookie.setMaxAge(3600);    // Expira em 1 hora
+
+                // Adicionar o cookie na resposta HTTP
+                FacesContext facesContext = FacesContext.getCurrentInstance();
+                HttpServletResponse httpResponse = (HttpServletResponse) facesContext.getExternalContext().getResponse();
+                httpResponse.addCookie(jwtCookie);
+
+                // Redireciona para o dashboard
                 FacesContext.getCurrentInstance().getExternalContext().redirect("dashboard.xhtml");
+               
             } 
 
-        } catch (IOException e) {
-            e.printStackTrace();
-            PrimeFaces.current().executeScript("alert('Erro ao efetuar login: " + e.getMessage() + "');");
         } catch (Exception ex) {
             ex.printStackTrace();
             PrimeFaces.current().executeScript("alert('Erro inesperado: " + ex.getMessage() + "');");

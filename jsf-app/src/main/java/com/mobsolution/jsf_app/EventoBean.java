@@ -41,6 +41,22 @@ public class EventoBean implements Serializable {
     @Getter @Setter
     private List<EventDTO> filteredEvents; // Store filtered results
 
+
+    private String selectedLink;
+
+
+    public void prepararFormulario() {
+        FacesContext context = FacesContext.getCurrentInstance();
+        Map<String, String> params = context.getExternalContext().getRequestParameterMap();
+        selectedLink = params.get("selectedLink");
+        
+        System.out.println("Link selecionado: " + selectedLink);
+        // Adicione aqui a lógica adicional
+    }
+
+
+
+
     @PostConstruct
     public void init() {
         eventModel = new LazyDataModel<EventDTO>() {
@@ -59,11 +75,13 @@ public class EventoBean implements Serializable {
                 if (req.getCookies() != null) {
                     for (Cookie cookie : req.getCookies()) {
                         if ("jwt".equals(cookie.getName())) {
-                            headers.add("Cookie", "jwt=" + cookie.getValue());
+                            // Add the Authorization header with the Bearer token
+                            headers.add("Authorization", "Bearer " + cookie.getValue());
                             break;
                         }
                     }
                 }
+
 
                 HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
                 ResponseEntity<EventoResponse> responseEntity = restTemplate.exchange(url, HttpMethod.GET, requestEntity, EventoResponse.class);
@@ -112,6 +130,9 @@ public class EventoBean implements Serializable {
             }
         };
     }
+
+
+
 
     /**
      * Applies global filtering logic to the event list.
