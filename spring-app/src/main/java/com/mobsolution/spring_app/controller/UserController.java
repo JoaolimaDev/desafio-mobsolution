@@ -6,7 +6,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,25 +18,40 @@ import com.mobsolution.spring_app.domain.model.User;
 import com.mobsolution.spring_app.domain.repository.UserRepository;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@Tag(name="Autênticação")
-public class loginController {
+public class UserController {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final long expirationTime = 3600000L;
     private final JwtUtilities jwtUtil;
 
+    @Tag(name="Autênticação")
+    @Operation(summary = "Autentica o usuário e retorna o JWT")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Retorno do token!",
+            content = { @Content(mediaType = "application/json", 
+            schema = @Schema(implementation = LoginRequest.class)) }),  
+        @ApiResponse(responseCode = "400", description = "Usuário ou senha inválidos!",
+            content = { @Content(mediaType = "application/json", 
+            schema = @Schema(implementation = Response.class)) })  
+    })
     @PostMapping("/login")
     public ResponseEntity<Response> login(@RequestBody @Valid 
-    LoginRequest loginRequest, HttpServletResponse responseCookie){
+    @Schema(
+        description = "Request body for user login",
+        example = "{\"username\": \"user1\", \"password\": \"user123\"}"
+    )
+    LoginRequest loginRequest){
         
         Optional<User> userOptional = userRepository.findByUsername(loginRequest.username());
 
@@ -52,18 +66,9 @@ public class loginController {
                     user.getPassword(),
                     AuthorityUtils.createAuthorityList(user.getRole())
                 ));
-
-
-                Cookie jwtCookie = new Cookie("jwt", token);
-                jwtCookie.setHttpOnly(true);  
-                jwtCookie.setSecure(true);   
-                jwtCookie.setPath("/");
-                jwtCookie.setMaxAge((int) (expirationTime / 1000));  
-    
-                responseCookie.addCookie(jwtCookie);
             
 
-                Response response = new Response("Login realizado com sucesso!", HttpStatus.OK.name());
+                Response response = new Response(token, HttpStatus.OK.name());
 
                 return new ResponseEntity<>(response, HttpStatus.OK);                
             }
@@ -74,22 +79,4 @@ public class loginController {
 
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);                
     }
-
-    @GetMapping("/logout")
-    public ResponseEntity<Response> logout(HttpServletResponse response) {
-        
-        Cookie jwtCookie = new Cookie("jwt", null);
-        jwtCookie.setHttpOnly(true);
-        jwtCookie.setSecure(true); 
-        jwtCookie.setPath("/");
-        jwtCookie.setMaxAge(0);
-
-        response.addCookie(jwtCookie);
-
-        Response responseBody = new Response("Logout realizado com sucesso!", HttpStatus.OK.name());
-
-
-        return new ResponseEntity<>(responseBody, HttpStatus.NO_CONTENT);                
-    }
-    
 }
