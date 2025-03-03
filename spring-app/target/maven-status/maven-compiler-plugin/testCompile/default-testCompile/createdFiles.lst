@@ -1,0 +1,6 @@
+com/mobsolution/spring_app/repository/PresencaRepositoryTest.class
+com/mobsolution/spring_app/TestSpringAppApplication.class
+com/mobsolution/spring_app/SpringAppApplicationTests.class
+com/mobsolution/spring_app/repository/ParticipanteRepositoryTest.class
+com/mobsolution/spring_app/repository/EventoRepositoryTest.class
+com/mobsolution/spring_app/TestcontainersConfiguration.class
