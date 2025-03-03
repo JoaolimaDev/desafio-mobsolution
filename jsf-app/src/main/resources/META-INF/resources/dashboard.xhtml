@@ -10,6 +10,14 @@
     <ui:define name="content"> <!-- Define o bloco "content" do template -->
         
         <h:form id="eventForm">
+            <!-- Toolbar  "Novo" button -->
+            <p:toolbar>
+                <p:toolbarGroup>
+                    <p:commandButton value="Novo" icon="pi pi-plus" styleClass="ui-button-success"
+                                     oncomplete="PF('eventDialog').show();" action="#{eventoBean.novoEvento}" />
+                </p:toolbarGroup>
+            </p:toolbar>
+            
             <!-- Campo de Filtro Global -->
             <p:inputText id="globalFilter" value="#{eventoBean.globalFilter}"
                          onkeyup="PF('eventsTable').filter()" 
@@ -34,28 +42,39 @@
                 </p:column>
 
                 <p:column headerText="Data Fim">
-                    
                     <h:outputText value="#{event.dataFim}" />
                 </p:column>
 
-                
                 <p:column headerText="Atualizar Evento">
                     <p:commandButton value="Abrir Formulário" 
-                                action="#{eventoBean.prepararFormulario}">
-                        <f:param name="selectedLink" value="#{event._links.self.href}" />
+                                     update=":eventForm:eventDialog"
+                                     oncomplete="PF('eventDialog').show()"
+                                     action="#{eventoBean.prepararFormulario(event)}">
                     </p:commandButton>
                 </p:column>
-
-                <p:column headerText="Deletar Evento">
-                    <p:commandButton value="Deletar evento" 
-                                    action="#{eventoBean.prepararFormulario}"
-                                    style="background-color: red;">
-                        <f:param name="selectedLink" value="#{event._links.evento.href}" />
-                    </p:commandButton>
-                </p:column>
-
 
             </p:dataTable>
+
+            <!-- Dialog for Editing Event -->
+            <p:dialog id="eventDialog" header="Editar Evento" widgetVar="eventDialog" modal="true" resizable="false" closable="true">
+                <h:panelGrid columns="2" cellpadding="5">
+                    <p:inputText id="nome" value="#{eventoBean.selectedEvent.nome}">Nome: </p:inputText>
+                    <br></br>
+                    <p:datePicker id="dataInicio" value="#{eventoBean.selectedEvent.dataInicio}" pattern="yyyy-MM-dd" showIcon="true">
+                        Data Início: 
+                    </p:datePicker>
+                    <p:datePicker id="dataFim" value="#{eventoBean.selectedEvent.dataFim}" pattern="yyyy-MM-dd" showIcon="true">
+                        Data Fim:
+                    </p:datePicker>
+
+                    <!-- Add empty label to balance columns -->
+                </h:panelGrid>
+                <p:commandButton value="Salvar" 
+                                 action="#{eventoBean.salvar}" 
+                                 update="eventsTable" 
+                                 oncomplete="PF('eventDialog').hide()" />
+            </p:dialog>
+            
         </h:form>
         
     </ui:define>
