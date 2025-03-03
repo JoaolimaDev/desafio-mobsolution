@@ -8,7 +8,7 @@ import com.mobsolution.spring_app.domain.model.Evento;
 
 @Repository
 @RepositoryRestResource(collectionResourceRel = "evento", path = "evento")
-
 public interface eventoRepository extends JpaRepository<Evento, Long>{
     
+    public Evento findByNome(String nome);
 }
