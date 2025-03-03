@@ -18,9 +18,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import com.mobsolution.jsf_app.dto.EventDTO;
-import com.mobsolution.jsf_app.dto.EventoResponse;
 import com.mobsolution.jsf_app.dto.ParticipanteResponse;
-import com.mobsolution.jsf_app.dto.ResquestDTO;
 import com.mobsolution.jsf_app.dto.participanteResquestDTO;
 
 import jakarta.annotation.PostConstruct;
@@ -48,7 +46,7 @@ public class participanteBean implements Serializable {
     private List<EventDTO> eventOptions;           // List of events retrieved from API
         
     @Getter @Setter
-    private EventDTO selectedEvento;   
+    private String selectedEvento;   
 
     @Getter @Setter
     private String globalFilter = "";  // Store global filter text
@@ -61,13 +59,45 @@ public class participanteBean implements Serializable {
 
         this.selectedEvent = participanteDTO;
 
-      
+        if (selectedEvent.get_links().getEvento().getHref() != null) {
+
+
+            String url = selectedEvent.get_links().getEvento().getHref();
+
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setAccept(Collections.singletonList(MediaType.valueOf("application/hal+json")));
+    
+            // Retrieve JWT token from cookies
+            FacesContext fc = FacesContext.getCurrentInstance();
+            HttpServletRequest req = (HttpServletRequest) fc.getExternalContext().getRequest();
+            if (req.getCookies() != null) {
+                for (Cookie cookie : req.getCookies()) {
+                    if ("jwt".equals(cookie.getName())) {
+                        // Add the Authorization header with the Bearer token
+                        headers.add("Authorization", "Bearer " + cookie.getValue());
+                        break;
+                    }
+                }
+            }
+           
+    
+    
+            HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+            ResponseEntity<EventDTO> responseEntity = restTemplate.exchange(url, HttpMethod.GET, requestEntity, EventDTO.class);
+            EventDTO response = responseEntity.getBody();
+    
+           this.selectedEvento = response.get_links().getSelf().getHref();
+    
+            
+        }
+
     }    
 
 
     public void novoEvento() {
         this.selectedEvent = new ParticipanteDTO();
-
+        
     }
 
 
@@ -88,7 +118,7 @@ public class participanteBean implements Serializable {
         }
 
         participanteResquestDTO requestBody = new participanteResquestDTO(selectedEvent.getNome(), selectedEvent.getCpf(), selectedEvent.getEmail(), 
-        " ");
+        selectedEvento);
     
         // Extract JWT from cookies and add to headers
         FacesContext fc = FacesContext.getCurrentInstance();
@@ -130,10 +160,11 @@ public class participanteBean implements Serializable {
 
 
         try {
-            // Make the PUT request
+   
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.PUT, requestEntity, String.class);
-            System.out.println("Response: " + response.getStatusCode() + " - " + response.getBody());
-               // Redireciona para o dashboard
+            
+
+            System.out.println(response);
                FacesContext.getCurrentInstance().getExternalContext().redirect("dashboardParticipante.xhtml");
 
         } catch (HttpClientErrorException e) {

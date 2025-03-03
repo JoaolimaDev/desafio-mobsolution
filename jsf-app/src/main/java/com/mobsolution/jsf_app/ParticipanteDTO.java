@@ -9,6 +9,8 @@ public class ParticipanteDTO {
     private String nome;
     private String email;
     private String cpf;
+    private String evento;
+
 
     private ParticipanteLinks _links;
 }
